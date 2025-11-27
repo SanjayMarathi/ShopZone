@@ -1,0 +1,221 @@
+/* Theme Colors: Black (background/text), Yellow (accents), Orange (#ff9900, main color) */
+
+:root {
+    --primary-orange: #ff9900; /* Main accent color */
+    --primary-yellow: #ffc107; /* Secondary accent */
+    --primary-black: #121212; /* Dark background/text for contrast */
+    --secondary-bg: #212121; /* Slightly lighter background for body */
+    --card-bg: #2c2c2c; /* Dark card background */
+    --card-text: #f0f0f0; /* Light text for dark backgrounds */
+    --card-hover-shadow: rgba(255, 153, 0, 0.7); /* Strong orange glow on hover */
+}
+
+/* Global/General Styles */
+body {
+    background-color: var(--secondary-bg);
+    color: var(--card-text);
+    font-family: 'Arial', sans-serif;
+}
+
+.container {
+    padding-top: 20px;
+    padding-bottom: 50px;
+}
+
+/* Navbar Theming (High Contrast) */
+.custom-navbar {
+    background-color: var(--primary-black) !important;
+    border-bottom: 4px solid var(--primary-orange);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.custom-navbar .navbar-brand {
+    color: var(--primary-yellow) !important;
+    font-weight: 900;
+    font-size: 1.6rem;
+    letter-spacing: 1.5px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.custom-navbar .nav-link {
+    color: #e0e0e0 !important;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.custom-navbar .nav-link:hover {
+    color: var(--primary-yellow) !important;
+}
+
+.custom-navbar .nav-link.active {
+    color: var(--primary-yellow) !important;
+    border-bottom: 2px solid var(--primary-yellow);
+}
+
+/* Product Cards (Dark Mode with Hover Glow) */
+.product-card {
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px var(--card-hover-shadow), 0 8px 15px rgba(0, 0, 0, 0.3); /* Stronger glow */
+}
+
+.card-title {
+    font-weight: 800;
+    color: var(--primary-yellow); /* Product title stands out */
+    font-size: 1.2rem;
+}
+
+.card-text.text-orange {
+    color: var(--primary-orange) !important;
+    font-size: 1.6rem;
+    font-weight: 900;
+}
+
+.card-img-top {
+    height: 250px;
+    width: 100%;
+    object-fit: contain;
+    padding: 15px;
+    background-color: var(--primary-black); /* Dark background for product image */
+    border-radius: 10px 10px 0 0;
+}
+
+.text-secondary {
+    color: #b0b0b0 !important;
+}
+
+/* Stock Status */
+.text-danger {
+    color: #ff4d4d !important;
+    font-weight: 700;
+}
+.text-success {
+    color: #5cb85c !important;
+    font-weight: 700;
+}
+
+/* Buttons */
+.add-to-cart-btn {
+    background-color: var(--primary-orange) !important;
+    border-color: var(--primary-orange) !important;
+    color: var(--primary-black) !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.add-to-cart-btn:hover:not(:disabled) {
+    background-color: #e68a00 !important;
+    border-color: #e68a00 !important;
+    box-shadow: 0 0 10px rgba(255, 153, 0, 0.9);
+}
+
+.btn-outline-dark {
+    color: var(--primary-orange) !important;
+    border-color: var(--primary-orange) !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-dark:hover {
+    background-color: var(--primary-orange) !important;
+    color: var(--primary-black) !important;
+    border-color: var(--primary-orange) !important;
+}
+
+.btn-warning:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(100%);
+    background-color: var(--card-bg) !important;
+    color: #999 !important;
+    border-color: #555 !important;
+}
+
+/* Search Bar */
+.custom-search-card {
+    background-color: var(--card-bg);
+    border: 2px solid var(--primary-orange);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.custom-search-card .form-control {
+    background-color: var(--secondary-bg);
+    color: var(--card-text);
+    border: none !important;
+    border-radius: 0.5rem 0 0 0.5rem;
+}
+
+/* Pagination */
+.custom-page-link-active {
+    background-color: var(--primary-orange) !important;
+    border-color: var(--primary-orange) !important;
+    color: var(--primary-black) !important;
+    font-weight: 800;
+}
+
+.pagination .page-link {
+    background-color: var(--secondary-bg);
+    color: var(--primary-orange);
+    border-color: var(--primary-orange);
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--primary-orange);
+    color: var(--primary-black);
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: var(--secondary-bg);
+    border-color: #6c757d;
+}
+
+/* Cart Page List Styling */
+.list-group-item {
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    border-color: #444;
+    transition: background-color 0.2s;
+}
+
+.list-group-item:hover {
+    background-color: #383838;
+}
+
+.list-group-item h5 {
+    color: var(--primary-yellow);
+}
+
+.list-group-item .text-muted {
+    color: #999 !important;
+}
+
+/* Checkout Status Page */
+.checkout-card {
+    background-color: var(--card-bg);
+    color: var(--card-text);
+    border: none;
+}
+/* *** FIXES FOR FORM VISIBILITY *** */
+.checkout-card .form-select,
+.checkout-card .form-control {
+    background-color: #383838 !important; /* Lighter dark background for input fields */
+    color: var(--card-text) !important; /* Light text color */
+    border-color: #555 !important;
+    /* This ensures dark text doesn't hide on dark background */
+}
+
+.checkout-card .form-label {
+    color: var(--card-text) !important; /* Light text for labels */
+}

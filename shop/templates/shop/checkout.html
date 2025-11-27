@@ -1,0 +1,200 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout Status</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <nav class="navbar navbar-expand-lg navbar-dark bg-dark custom-navbar">
+            <div class="container-fluid">
+              <a class="navbar-brand text-warning" href="{% url 'index' %}">My E-com</a>
+              <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'index' %}">Home</a>
+                </li>
+              </ul>
+            </div>
+          </nav>
+        </div>
+      </div>
+      <div class="row mt-5">
+        <div class="col-md-8 offset-md-2">
+          <div class="card p-4 shadow text-center checkout-card">
+
+            {% if status == 'success' or status == 'error' %}
+                {% if status == 'success' %}
+                    <h2 class="card-title mb-4" style="color: #5cb85c;">✅ Order Successful!</h2>
+                    <div class="alert mt-3" role="alert" style="background-color: #383838; color: #fff; border-color: #5cb85c; border-left: 5px solid #5cb85c;">
+                        Your order has been placed.
+                    </div>
+                    <script type="text/javascript">
+                        localStorage.removeItem('cart');
+                    </script>
+                
+                {% elif status == 'error' %}
+                    <h2 class="card-title mb-4" style="color: #ff4d4d;">❌ Payment Failed / Error!</h2>
+                    <div class="alert mt-3" role="alert" style="background-color: #383838; color: #fff; border-color: #ff4d4d; border-left: 5px solid #ff4d4d;">
+                        {{ message }} <br>
+                        The transaction was unsuccessful. Please go back to Cart and try again.
+                    </div>
+                {% endif %}
+
+                <a href="{% url 'index' %}" class="btn btn-lg w-100 mt-4 add-to-cart-btn">
+                    Continue Shopping
+                </a>
+                
+                <a href="{% url 'cart' %}" class="btn btn-md btn-outline-dark w-100 mt-2">
+                    Back to Cart
+                </a>
+
+            {% else %}
+                <h2 class="card-title mb-4" style="color: var(--primary-yellow);">🛒 Order Summary & Payment</h2>
+                
+                <div id="summary-items-container" class="mb-4">
+                    </div>
+
+                <div class="text-end mb-4">
+                    <h4 class="fw-bold" style="color: var(--primary-orange);">Total to Pay: <span id="summary-total-price">₹0.00</span></h4>
+                </div>
+
+                <form id="payment-form" method="POST" action="{% url 'checkout' %}">
+                    {% csrf_token %} 
+                    <input type="hidden" name="cart_data" id="final-cart-data-input">
+                    <div class="mb-3 text-start">
+                        <label for="paymentMethod" class="form-label">Payment Method</label>
+                        <select id="paymentMethod" class="form-select">
+                            <option value="card">Credit Card</option>
+                            <option value="netbanking">Net Banking</option>
+                            <option value="upi">UPI</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-lg w-100 mt-3 add-to-cart-btn" style="background-color: #383838; color: white;">
+                        PAY NOW & CONFIRM ORDER
+                    </button>
+                </form>
+
+                <a href="{% url 'cart' %}" class="btn btn-md btn-outline-dark w-100 mt-3">
+                    Go Back to Edit Cart
+                </a>
+
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if not status %}
+    <script type="text/javascript">
+        // 1. Load data and setup product map (same as cart.html)
+        var productMap = {};
+        var django_products = [
+            {% for product in product_objects %}
+            {
+                'id': {{ product.id }},
+                'title': '{{ product.title|escapejs }}',
+                'price': {{ product.price }},
+                'discount_price': {{ product.discount_price }}, // ADDED
+                'image': '{{ product.image|escapejs }}',
+                'stock': {{ product.stock }},
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        django_products.forEach(p => {
+            // CALCULATE SELLING PRICE
+            p.selling_price = (p.discount_price > 0 && p.discount_price < p.price) ? p.discount_price : p.price;
+            productMap[p.id] = p;
+        });
+
+        function getCart() {
+            return JSON.parse(localStorage.getItem("cart") || '{}');
+        }
+
+        // 2. Render Summary Function
+        function renderSummary() {
+            let cart = getCart();
+            let container = $('#summary-items-container');
+            let cartTotal = 0;
+            let cartIsEmpty = Object.keys(cart).length === 0;
+
+            container.empty();
+            
+            if (cartIsEmpty) {
+                container.append('<div class="alert alert-danger" style="color: #ff4d4d; background-color: #383838; border-color: #ff4d4d; border-left: 5px solid #ff4d4d;">Your cart is empty. Please return to the cart page.</div>');
+                $('#payment-form button').prop('disabled', true).text('Cart is Empty - Cannot Pay');
+                return;
+            }
+
+            let html = '<ul class="list-group">';
+            let cartDataForSubmit = {};
+
+            for (let itemId in cart) {
+                let qty = cart[itemId];
+                let product = productMap[itemId];
+
+                if (!product) continue; 
+                
+                // Final stock and quantity check before displaying summary
+                if (qty > product.stock) {
+                     html += `<li class="list-group-item bg-danger text-white">Error: ${product.title} stock mismatch. Please update cart.</li>`;
+                     $('#payment-form button').prop('disabled', true).text('Stock Error - Cannot Pay');
+                     cartTotal = 0;
+                     break;
+                }
+
+                // USE SELLING PRICE FOR TOTAL
+                let itemTotal = product.selling_price * qty;
+                cartTotal += itemTotal;
+                // END USE SELLING PRICE
+                cartDataForSubmit[itemId] = qty;
+                
+                // Generate price display string
+                let priceDisplay = (product.discount_price > 0 && product.discount_price < product.price) ? 
+                    `<small class="text-muted">${qty} x <span class="text-decoration-line-through me-1">₹${product.price.toFixed(2)}</span> ₹${product.selling_price.toFixed(2)}</small>` : 
+                    `<small class="text-muted">${qty} x ₹${product.selling_price.toFixed(2)}</small>`;
+
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <img src="${product.image}" alt="${product.title}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 15px; border-radius: 5px; background-color: var(--primary-black);">
+                            <div>
+                                <h6 class="mb-0 fw-bold" style="color: var(--primary-yellow);">${product.title}</h6>
+                                ${priceDisplay}
+                            </div>
+                        </div>
+                        <div class="fw-bold" style="color: var(--primary-orange);">
+                            ₹${itemTotal.toFixed(2)}
+                        </div>
+                    </li>
+                `;
+            }
+
+            html += '</ul>';
+            container.append(html);
+            $('#summary-total-price').text(`₹${cartTotal.toFixed(2)}`);
+            
+            // Set the hidden field data for the final POST submission
+            $('#final-cart-data-input').val(JSON.stringify(cartDataForSubmit));
+        }
+
+        // 3. Initial Load
+        $(document).ready(function() {
+            renderSummary();
+        });
+    </script>
+    {% endif %}
+  </body>
+</html>

@@ -1,0 +1,240 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Shopping Cart</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <nav class="navbar navbar-expand-lg navbar-dark bg-dark custom-navbar">
+            <div class="container-fluid">
+              <a class="navbar-brand text-warning" href="{% url 'index' %}">My E-com</a>
+              <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                  <a class="nav-link text-white" href="{% url 'index' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active text-warning" href="{% url 'cart' %}">Cart</a>
+                </li>
+              </ul>
+            </div>
+          </nav>
+        </div>
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-md-12">
+            <h1 class="fw-bold mb-4" style="color: var(--primary-orange);">Your Shopping Cart</h1>
+            <div id="cart-items-container" class="mb-4">
+                </div>
+            
+            <div class="row">
+                <div class="col-md-6 offset-md-6 text-end">
+                    <div class="card p-3 shadow-sm" style="background-color: var(--card-bg); color: var(--card-text);">
+                        <h4 class="fw-bold" style="color: var(--primary-orange);">Total: <span id="cart-total-price">₹0.00</span></h4>
+                        
+                        <button id="proceed-to-summary-btn" class="btn btn-lg w-100 mt-2 add-to-cart-btn" style="display: none;">
+                            Proceed to Checkout
+                        </button>
+                        
+                        <button id="clear-cart-btn" class="btn btn-sm btn-outline-dark mt-3">
+                            Clear Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+      
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script type="text/javascript">
+        // 1. Get Django Product Data into a JS map for quick lookup
+        var productMap = {};
+        var django_products = [
+            {% for product in product_objects %}
+            {
+                'id': {{ product.id }},
+                'title': '{{ product.title|escapejs }}',
+                'price': {{ product.price }},
+                'discount_price': {{ product.discount_price }}, // ADDED
+                'image': '{{ product.image|escapejs }}',
+                'stock': {{ product.stock }},
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        django_products.forEach(p => {
+            // CALCULATE SELLING PRICE
+            p.selling_price = (p.discount_price > 0 && p.discount_price < p.price) ? p.discount_price : p.price;
+            productMap[p.id] = p;
+        });
+
+        // 2. Core Cart Functions
+        function getCart() {
+            return JSON.parse(localStorage.getItem("cart") || '{}');
+        }
+
+        function saveCart(cart) {
+            localStorage.setItem("cart", JSON.stringify(cart));
+            renderCart();
+        }
+
+        function updateQuantity(itemId, change) {
+            let cart = getCart();
+            let newQty = (cart[itemId] || 0) + change;
+            let product = productMap[itemId];
+
+            if (product && newQty > product.stock) {
+                alert(`Cannot add more, only ${product.stock} in stock.`);
+                newQty = product.stock;
+            }
+
+            if (newQty <= 0) {
+                delete cart[itemId];
+            } else {
+                cart[itemId] = newQty;
+            }
+            saveCart(cart);
+        }
+
+        function removeItem(itemId) {
+            let cart = getCart();
+            delete cart[itemId];
+            saveCart(cart);
+        }
+
+        // 3. Render the Cart HTML
+        function renderCart() {
+            let cart = getCart();
+            let container = $('#cart-items-container');
+            let cartTotal = 0;
+            let cartIsEmpty = Object.keys(cart).length === 0;
+
+            container.empty();
+            
+            if (cartIsEmpty) {
+                container.append('<div class="alert alert-info" style="background-color: #333; color: #fff; border-color: #555;">Your cart is empty. Start shopping on the <a href="{% url "index" %}" style="color: var(--primary-orange);">home page</a>.</div>');
+                $('#proceed-to-summary-btn').hide(); 
+            } else {
+                let html = '<ul class="list-group">';
+
+                let validCart = {}; 
+                let cartWasModified = false;
+
+                for (let itemId in cart) {
+                    let qty = cart[itemId];
+                    let product = productMap[itemId];
+
+                    if (!product) {
+                        cartWasModified = true;
+                        continue; 
+                    }
+                    
+                    validCart[itemId] = qty;
+
+                    // USE SELLING PRICE FOR TOTAL
+                    let itemTotal = product.selling_price * qty;
+                    cartTotal += itemTotal;
+                    // END USE SELLING PRICE
+
+                    // Generate price display string
+                    let priceDisplay = (product.discount_price > 0 && product.discount_price < product.price) ? 
+                        `Unit Price: <span class="text-decoration-line-through me-2">₹${product.price.toFixed(2)}</span> ₹${product.selling_price.toFixed(2)}` : 
+                        `Unit Price: ₹${product.selling_price.toFixed(2)}`;
+
+                    html += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="${product.image}" alt="${product.title}" style="width: 70px; height: 70px; object-fit: cover; margin-right: 15px; border-radius: 5px; background-color: var(--primary-black);">
+                                <div>
+                                    <h5 class="mb-1 fw-bold">${product.title}</h5>
+                                    <p class="mb-0 text-muted">${priceDisplay}</p>
+                                    <p class="mb-0 text-secondary">${product.stock > 0 ? 'In Stock: ' + product.stock : '<span class="text-danger">Out of Stock</span>'}</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="btn-group me-3" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-dark update-qty" data-id="${itemId}" data-change="-1">-</button>
+                                    <span class="btn btn-sm btn-light border" style="background-color: #444; color: #fff; border-color: #555;">${qty}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-dark update-qty" data-id="${itemId}" data-change="1" ${qty >= product.stock ? 'disabled' : ''}>+</button>
+                                </div>
+                                <div class="me-3 fw-bold" style="width: 100px; color: var(--primary-orange);">
+                                    ₹${itemTotal.toFixed(2)}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-danger remove-item" data-id="${itemId}">Remove</button>
+                            </div>
+                        </li>
+                    `;
+                }
+
+                if (cartWasModified) {
+                    localStorage.setItem("cart", JSON.stringify(validCart));
+                    if (Object.keys(validCart).length === 0) {
+                        renderCart(); 
+                        return;
+                    }
+                }
+
+                html += '</ul>';
+                container.append(html);
+                $('#proceed-to-summary-btn').show(); 
+            }
+
+            $('#cart-total-price').text(`₹${cartTotal.toFixed(2)}`);
+            updateGlobalCartCount();
+        }
+
+        function updateGlobalCartCount() {
+            let cart = getCart();
+            let totalItems = 0;
+            for(let x in cart) {
+                totalItems += cart[x];
+            }
+        }
+
+        // 4. Event Handlers
+        $(document).on('click', '.update-qty', function() {
+            let itemId = $(this).data('id');
+            let change = parseInt($(this).data('change'));
+            updateQuantity(itemId, change);
+        });
+
+        $(document).on('click', '.remove-item', function() {
+            let itemId = $(this).data('id');
+            removeItem(itemId);
+        });
+
+        $('#clear-cart-btn').on('click', function() {
+            if (confirm("Are you sure you want to clear your cart?")) {
+                localStorage.removeItem('cart');
+                renderCart();
+            }
+        });
+
+        $('#proceed-to-summary-btn').on('click', function() {
+            if (Object.keys(getCart()).length > 0) {
+                window.location.href = "{% url 'checkout' %}";
+            } else {
+                alert("Your cart is empty!");
+            }
+        });
+
+        // Initial load
+        $(document).ready(function() {
+            renderCart();
+        });
+    </script>
+  </body>
+</html>
