@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Products
+from .models import Products, Order 
 from django.core.paginator import Paginator
 from django.db import transaction 
 import json 
@@ -36,17 +36,41 @@ def checkout(request):
     if request.method == 'POST':
         # --- STEP 2: FINALIZE PAYMENT & DEDUCT STOCK ---
         try:
+            # 1. Collect form data
+            customer_name = request.POST.get('customer_name')
+            email = request.POST.get('email')
+            address = request.POST.get('address')
+            zip_code = request.POST.get('zip_code')
             cart_data_json = request.POST.get('cart_data', '{}')
             cart = json.loads(cart_data_json)
 
             if not cart:
                 return render(request, 'shop/checkout.html', {'status': 'error', 'message': 'Your cart is empty.'})
+            
+            # Basic validation for new fields
+            if not all([customer_name, email, address, zip_code]):
+                 return render(request, 'shop/checkout.html', {
+                    'status': 'error',
+                    'message': 'Missing required shipping information (Name, Email, Address, or ZIP Code).'
+                })
+
 
             with transaction.atomic():
+                # 2. Create Order record (before stock deduction)
+                Order.objects.create(
+                    name=customer_name,
+                    email=email,
+                    address=address,
+                    zip_code=zip_code,
+                    cart_data=cart_data_json
+                )
+
+                # 3. Deduct Stock
                 for product_id, quantity in cart.items():
                     product = Products.objects.select_for_update().get(id=int(product_id))
                     
                     if product.stock < quantity:
+                        # Rollback is handled by transaction.atomic() on exception
                         return render(request, 'shop/checkout.html', {
                             'status': 'error',
                             'message': f'Insufficient stock for {product.title}. Only {product.stock} available.'
@@ -57,7 +81,7 @@ def checkout(request):
 
             return render(request, 'shop/checkout.html', {
                 'status': 'success',
-                'message': 'Order successful! Stock updated in the database.'
+                'message': 'Order successful! Stock updated and order details saved in the database.'
             })
 
         except Products.DoesNotExist:

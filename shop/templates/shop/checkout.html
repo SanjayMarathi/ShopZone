@@ -71,6 +71,31 @@
                 <form id="payment-form" method="POST" action="{% url 'checkout' %}">
                     {% csrf_token %} 
                     <input type="hidden" name="cart_data" id="final-cart-data-input">
+
+                    <h5 class="mt-4 mb-3" style="color: var(--primary-orange);">Shipping Information</h5>
+                    
+                    <div class="mb-3 text-start">
+                        <label for="customerName" class="form-label">Full Name</label>
+                        <input type="text" name="customer_name" id="customerName" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="customerEmail" class="form-label">Email</label>
+                        <input type="email" name="email" id="customerEmail" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="customerAddress" class="form-label">Address</label>
+                        <textarea name="address" id="customerAddress" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3 text-start">
+                        <label for="customerZipCode" class="form-label">ZIP Code</label>
+                        <input type="text" name="zip_code" id="customerZipCode" class="form-control" required>
+                    </div>
+                    
+                    <h5 class="mt-4 mb-3" style="color: var(--primary-orange);">Payment</h5>
+                    
                     <div class="mb-3 text-start">
                         <label for="paymentMethod" class="form-label">Payment Method</label>
                         <select id="paymentMethod" class="form-select">
