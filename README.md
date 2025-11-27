@@ -48,6 +48,15 @@
 </p>
 
 ---
+### <p align="center">🛒 Shopping Information</p>
+<p align="center">
+  <img src="outputs/ShoppingInfo.png" width="700" alt="Checkout Summary" />
+</p>
+<p align="center">
+  Displays essential shopping details such as cart items, total price, quantity updates, remove item option, and checkout flow. Styled in the same dark/yellow theme for consistency. It ensures a smooth shopping experience with real-time updates.
+</p>
+
+---
 
 ### <p align="center">🎉 Order Successful Page</p>
 <p align="center">
