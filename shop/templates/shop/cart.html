@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Checkout Status</title>
+    <title>Your Shopping Cart</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -28,198 +28,190 @@
           </nav>
         </div>
       </div>
+
       <div class="row mt-5">
-        <div class="col-md-8 offset-md-2">
-          <div class="card p-4 shadow text-center checkout-card">
-
-            {% if status == 'success' or status == 'error' %}
-                {% if status == 'success' %}
-                    <h2 class="card-title mb-4" style="color: #5cb85c;">✅ Order Successful!</h2>
-                    <div class="alert mt-3" role="alert" style="background-color: #383838; color: #fff; border-color: #5cb85c; border-left: 5px solid #5cb85c;">
-                        Your order has been placed.
-                    </div>
-                    <script type="text/javascript">
-                        localStorage.removeItem('cart');
-                    </script>
-                
-                {% elif status == 'error' %}
-                    <h2 class="card-title mb-4" style="color: #ff4d4d;">❌ Payment Failed / Error!</h2>
-                    <div class="alert mt-3" role="alert" style="background-color: #383838; color: #fff; border-color: #ff4d4d; border-left: 5px solid #ff4d4d;">
-                        {{ message }} <br>
-                        The transaction was unsuccessful. Please go back to Cart and try again.
-                    </div>
-                {% endif %}
-
-                <a href="{% url 'index' %}" class="btn btn-lg w-100 mt-4 add-to-cart-btn">
-                    Continue Shopping
-                </a>
-                
-                <a href="{% url 'cart' %}" class="btn btn-md btn-outline-dark w-100 mt-2">
-                    Back to Cart
-                </a>
-
-            {% else %}
-                <h2 class="card-title mb-4" style="color: var(--primary-yellow);">🛒 Order Summary & Payment</h2>
-                
-                <div id="summary-items-container" class="mb-4">
-                    </div>
-
-                <div class="text-end mb-4">
-                    <h4 class="fw-bold" style="color: var(--primary-orange);">Total to Pay: <span id="summary-total-price">₹0.00</span></h4>
-                </div>
-
-                <form id="payment-form" method="POST" action="{% url 'checkout' %}">
-                    {% csrf_token %} 
-                    <input type="hidden" name="cart_data" id="final-cart-data-input">
-
-                    <h5 class="mt-4 mb-3" style="color: var(--primary-orange);">Shipping Information</h5>
-                    
-                    <div class="mb-3 text-start">
-                        <label for="customerName" class="form-label">Full Name</label>
-                        <input type="text" name="customer_name" id="customerName" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3 text-start">
-                        <label for="customerEmail" class="form-label">Email</label>
-                        <input type="email" name="email" id="customerEmail" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3 text-start">
-                        <label for="customerAddress" class="form-label">Address</label>
-                        <textarea name="address" id="customerAddress" class="form-control" rows="3" required></textarea>
-                    </div>
-
-                    <div class="mb-3 text-start">
-                        <label for="customerZipCode" class="form-label">ZIP Code</label>
-                        <input type="text" name="zip_code" id="customerZipCode" class="form-control" required>
-                    </div>
-                    
-                    <h5 class="mt-4 mb-3" style="color: var(--primary-orange);">Payment</h5>
-                    
-                    <div class="mb-3 text-start">
-                        <label for="paymentMethod" class="form-label">Payment Method</label>
-                        <select id="paymentMethod" class="form-select">
-                            <option value="card">Credit Card</option>
-                            <option value="netbanking">Net Banking</option>
-                            <option value="upi">UPI</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="btn btn-lg w-100 mt-3 add-to-cart-btn" style="background-color: #383838; color: white;">
-                        PAY NOW & CONFIRM ORDER
-                    </button>
-                </form>
-
-                <a href="{% url 'cart' %}" class="btn btn-md btn-outline-dark w-100 mt-3">
-                    Go Back to Edit Cart
-                </a>
-
-            {% endif %}
+        <div class="col-md-12">
+          <h1 style="color: var(--card-text);">🛒 Your Shopping Cart</h1>
+          <hr style="border-color: #383838;">
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8">
+          <div id="cart-items-container" class="list-group">
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card p-4 checkout-card sticky-top" style="top: 20px;">
+            <h4 class="card-title" style="color: var(--primary-yellow);">Order Totals</h4>
+            <hr>
+            <div class="d-flex justify-content-between mb-4">
+              <h5 class="mb-0 fw-bold" style="color: var(--card-text);">Total:</h5>
+              <h5 class="mb-0 fw-bold text-orange" id="cart-total-price">₹0.00</h5>
+            </div>
+            
+            <a href="{% url 'checkout' %}" id="proceed-to-checkout" class="btn btn-lg w-100 add-to-cart-btn mb-2">
+              Proceed to Checkout
+            </a>
+            
+            <button id="clear-cart-btn" class="btn btn-md btn-outline-dark w-100">
+              Clear Cart
+            </button>
           </div>
         </div>
       </div>
     </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    {% if not status %}
     <script type="text/javascript">
-        // 1. Load data and setup product map (same as cart.html)
-        var productMap = {};
-        var django_products = [
-            {% for product in product_objects %}
-            {
-                'id': {{ product.id }},
-                'title': '{{ product.title|escapejs }}',
-                'price': {{ product.price }},
-                'discount_price': {{ product.discount_price }}, // ADDED
-                'image': '{{ product.image|escapejs }}',
-                'stock': {{ product.stock }},
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ];
+      // 1. Load Data
+      var productMap = {};
+      var django_products = [
+          {% for product in product_objects %}
+          {
+              'id': {{ product.id }},
+              'title': '{{ product.title|escapejs }}',
+              'price': {{ product.price }},
+              'discount_price': {{ product.discount_price }},
+              'image': '{{ product.image|escapejs }}',
+              'stock': {{ product.stock }},
+          }{% if not forloop.last %},{% endif %}
+          {% endfor %}
+      ];
 
-        django_products.forEach(p => {
-            // CALCULATE SELLING PRICE
-            p.selling_price = (p.discount_price > 0 && p.discount_price < p.price) ? p.discount_price : p.price;
-            productMap[p.id] = p;
-        });
+      django_products.forEach(p => {
+          // CALCULATE SELLING PRICE
+          p.selling_price = (p.discount_price > 0 && p.discount_price < p.price) ? p.discount_price : p.price;
+          productMap[p.id] = p;
+      });
 
-        function getCart() {
-            return JSON.parse(localStorage.getItem("cart") || '{}');
-        }
+      function getCart() {
+          return JSON.parse(localStorage.getItem("cart") || '{}');
+      }
 
-        // 2. Render Summary Function
-        function renderSummary() {
-            let cart = getCart();
-            let container = $('#summary-items-container');
-            let cartTotal = 0;
-            let cartIsEmpty = Object.keys(cart).length === 0;
+      function setCart(cart) {
+          localStorage.setItem("cart", JSON.stringify(cart));
+      }
 
-            container.empty();
-            
-            if (cartIsEmpty) {
-                container.append('<div class="alert alert-danger" style="color: #ff4d4d; background-color: #383838; border-color: #ff4d4d; border-left: 5px solid #ff4d4d;">Your cart is empty. Please return to the cart page.</div>');
-                $('#payment-form button').prop('disabled', true).text('Cart is Empty - Cannot Pay');
-                return;
-            }
+      // 2. Render Cart
+      function renderCart() {
+          let cart = getCart();
+          let container = $('#cart-items-container');
+          let cartTotal = 0;
+          container.empty();
+          
+          if (Object.keys(cart).length === 0) {
+              container.append('<div class="alert alert-info text-center" style="color: var(--card-text); background-color: #f0f0f0; border-color: #ddd;">Your cart is empty.</div>');
+              $('#proceed-to-checkout').prop('disabled', true).text('Cart is Empty');
+              $('#clear-cart-btn').prop('disabled', true);
+              $('#cart-total-price').text('₹0.00');
+              return;
+          }
+          
+          $('#proceed-to-checkout').prop('disabled', false).text('Proceed to Checkout');
+          $('#clear-cart-btn').prop('disabled', false);
 
-            let html = '<ul class="list-group">';
-            let cartDataForSubmit = {};
 
-            for (let itemId in cart) {
-                let qty = cart[itemId];
-                let product = productMap[itemId];
+          for (let itemId in cart) {
+              let qty = cart[itemId];
+              let product = productMap[itemId];
 
-                if (!product) continue; 
-                
-                // Final stock and quantity check before displaying summary
-                if (qty > product.stock) {
-                     html += `<li class="list-group-item bg-danger text-white">Error: ${product.title} stock mismatch. Please update cart.</li>`;
-                     $('#payment-form button').prop('disabled', true).text('Stock Error - Cannot Pay');
-                     cartTotal = 0;
-                     break;
-                }
+              if (!product) continue; 
+              
+              let itemTotal = product.selling_price * qty;
+              cartTotal += itemTotal;
+              
+              let stockStatus = (product.stock < qty) ? 
+                  `<small class="text-danger fw-bold">Only ${product.stock} in stock!</small>` : 
+                  `<small class="text-secondary">In Stock: ${product.stock}</small>`;
+              
+              // Price display with strike-through for discount
+              let priceDisplay = (product.discount_price > 0 && product.discount_price < product.price) ?
+                  `<small class="text-secondary text-decoration-line-through me-2">₹${product.price.toFixed(2)}</small><span class="text-orange fw-bold">₹${product.selling_price.toFixed(2)}</span>` :
+                  `<span class="text-orange fw-bold">₹${product.selling_price.toFixed(2)}</span>`;
 
-                // USE SELLING PRICE FOR TOTAL
-                let itemTotal = product.selling_price * qty;
-                cartTotal += itemTotal;
-                // END USE SELLING PRICE
-                cartDataForSubmit[itemId] = qty;
-                
-                // Generate price display string
-                let priceDisplay = (product.discount_price > 0 && product.discount_price < product.price) ? 
-                    `<small class="text-muted">${qty} x <span class="text-decoration-line-through me-1">₹${product.price.toFixed(2)}</span> ₹${product.selling_price.toFixed(2)}</small>` : 
-                    `<small class="text-muted">${qty} x ₹${product.selling_price.toFixed(2)}</small>`;
+              let itemHtml = `
+                  <li class="list-group-item d-flex justify-content-between align-items-center mb-3 p-3 product-card">
+                      <div class="d-flex align-items-center flex-grow-1">
+                          <img src="${product.image}" alt="${product.title}" style="width: 80px; height: 80px; object-fit: contain; margin-right: 15px; border-radius: 5px; background-color: #eee;">
+                          <div>
+                              <h5 class="mb-1 fw-bold" style="color: #000;">${product.title}</h5>
+                              <p class="mb-0">Unit Price: ${priceDisplay}</p>
+                              <p class="mb-0">${stockStatus}</p>
+                          </div>
+                      </div>
+                      
+                      <div class="d-flex align-items-center">
+                          <div class="input-group input-group-sm me-3" style="width: 130px;">
+                              <button class="btn btn-outline-dark update-qty" data-id="${itemId}" data-action="minus" type="button">-</button>
+                              <input type="text" class="form-control text-center" value="${qty}" readonly>
+                              <button class="btn btn-outline-dark update-qty" data-id="${itemId}" data-action="plus" type="button" 
+                                  {% if product.stock <= 0 %}disabled{% endif %}
+                              >+</button>
+                          </div>
+                          <div class="fw-bold text-orange me-3" style="min-width: 80px; text-align: right;">
+                              ₹${itemTotal.toFixed(2)}
+                          </div>
+                          <button class="btn btn-danger remove-item" data-id="${itemId}">Remove</button>
+                      </div>
+                  </li>
+              `;
+              container.append(itemHtml);
+          }
 
-                html += `
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <img src="${product.image}" alt="${product.title}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 15px; border-radius: 5px; background-color: var(--primary-black);">
-                            <div>
-                                <h6 class="mb-0 fw-bold" style="color: var(--primary-yellow);">${product.title}</h6>
-                                ${priceDisplay}
-                            </div>
-                        </div>
-                        <div class="fw-bold" style="color: var(--primary-orange);">
-                            ₹${itemTotal.toFixed(2)}
-                        </div>
-                    </li>
-                `;
-            }
+          $('#cart-total-price').text(`₹${cartTotal.toFixed(2)}`);
+      }
 
-            html += '</ul>';
-            container.append(html);
-            $('#summary-total-price').text(`₹${cartTotal.toFixed(2)}`);
-            
-            // Set the hidden field data for the final POST submission
-            $('#final-cart-data-input').val(JSON.stringify(cartDataForSubmit));
-        }
+      // 3. Event Handlers
+      $(document).ready(function() {
+          renderCart();
+          
+          // Handle Quantity Updates
+          $(document).on('click', '.update-qty', function() {
+              let itemId = $(this).data('id').toString();
+              let action = $(this).data('action');
+              let cart = getCart();
+              let product = productMap[itemId];
 
-        // 3. Initial Load
-        $(document).ready(function() {
-            renderSummary();
-        });
+              if (!product) return;
+
+              if (action === 'plus') {
+                  if (cart[itemId] < product.stock) {
+                      cart[itemId] = cart[itemId] + 1;
+                  } else {
+                      alert(`Cannot add more, only ${product.stock} available.`);
+                  }
+              } else if (action === 'minus') {
+                  if (cart[itemId] > 1) {
+                      cart[itemId] = cart[itemId] - 1;
+                  } else {
+                      // If quantity is 1 and minus is clicked, remove the item
+                      delete cart[itemId];
+                  }
+              }
+              
+              setCart(cart);
+              renderCart();
+          });
+
+          // Handle Remove Item
+          $(document).on('click', '.remove-item', function() {
+              let itemId = $(this).data('id').toString();
+              let cart = getCart();
+              delete cart[itemId];
+              setCart(cart);
+              renderCart();
+          });
+          
+          // Handle Clear Cart
+          $('#clear-cart-btn').on('click', function() {
+              if (confirm("Are you sure you want to clear your shopping cart?")) {
+                  localStorage.removeItem("cart");
+                  renderCart();
+              }
+          });
+      });
     </script>
-    {% endif %}
   </body>
 </html>
