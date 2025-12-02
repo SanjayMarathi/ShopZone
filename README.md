@@ -42,10 +42,19 @@
 ### <p align="center">💳 Checkout Summary & Payment Step</p>
 <p align="center">
   <img src="outputs/PaymentSelection.png" width="700" alt="Checkout Summary" />
-<img src="outputs/QRpayment.png" width="700" alt="Checkout Summary" />
 </p>
 <p align="center">
   The mandatory final step showing the order summary, total price, and the <b>PAY NOW & CONFIRM ORDER</b> button which triggers transactional stock deduction.
+</p>
+
+---
+
+### <p align="center">💳 UPI Payment QR Code Payment</p>
+<p align="center">
+  <img src="outputs/QRpayment.png" width="700" alt="UPI QR Payment" />
+</p>
+<p align="center">
+  This feature provides a **seamless and secure instant payment** option. When selected, the system instantly generates a unique QR code. Customers can scan this code with any UPI app (like Google Pay or PhonePe), and the application will automatically pre-fill the **exact total amount** of the order, allowing for a quick, error-free transaction with a single tap.
 </p>
 
 ---
