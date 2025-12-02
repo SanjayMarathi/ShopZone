@@ -42,6 +42,7 @@
 ### <p align="center">💳 Checkout Summary & Payment Step</p>
 <p align="center">
   <img src="outputs/PaymentSelection.png" width="700" alt="Checkout Summary" />
+<img src="outputs/QRpayment.png" width="700" alt="Checkout Summary" />
 </p>
 <p align="center">
   The mandatory final step showing the order summary, total price, and the <b>PAY NOW & CONFIRM ORDER</b> button which triggers transactional stock deduction.

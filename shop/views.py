@@ -1,13 +1,19 @@
+# ShopZone/shop/views.py
+
 from django.shortcuts import render, redirect
 from .models import Products, Order 
 from django.core.paginator import Paginator
 from django.db import transaction 
 import json 
+# NEW IMPORTS FOR QR CODE GENERATION
+import qrcode
+from PIL import Image 
+from io import BytesIO 
+from django.http import HttpResponse 
 # Create your views here.
 
 def index(request):
     product_objects = Products.objects.all()
-    # ... (rest of index view remains unchanged) ...
     
     #search code
     item_name = request.GET.get('item_name')
@@ -93,3 +99,38 @@ def checkout(request):
     # --- STEP 1: ORDER SUMMARY / PAYMENT PAGE (GET Request) ---
     product_objects = Products.objects.all()
     return render(request, 'shop/checkout.html', {'product_objects': product_objects, 'is_summary_page': True})
+
+
+# NEW VIEW: Generates and streams the QR code image
+def generate_upi_qr(request):
+    # This view expects the complete UPI deep-link URL as a GET parameter 'upi_string'
+    upi_string = request.GET.get('upi_string')
+    
+    if not upi_string:
+        return HttpResponse("UPI string missing.", status=400)
+    
+    try:
+        # Create QR code instance
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(upi_string)
+        qr.make(fit=True)
+
+        # Create PIL Image object
+        img_pil = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+        
+        # Save image to an in-memory byte buffer
+        buffer = BytesIO()
+        img_pil.save(buffer, format='PNG')
+        buffer.seek(0)
+        
+        # Return image as HTTP response
+        return HttpResponse(buffer.getvalue(), content_type='image/png')
+
+    except Exception as e:
+        print(f"QR Code generation error: {e}")
+        return HttpResponse("Error generating QR code.", status=500)

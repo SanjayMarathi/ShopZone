@@ -1,3 +1,5 @@
+# ShopZone/ecomsite/urls.py
+
 """
 URL configuration for ecomsite project.
 ...
@@ -13,4 +15,6 @@ urlpatterns = [
     # Added cart and checkout URLs
     path('checkout/', views.checkout, name='checkout'),
     path('cart/', views.cart, name='cart'), 
+    # NEW URL: for generating QR code dynamically
+    path('generate-upi-qr/', views.generate_upi_qr, name='generate_upi_qr'),
 ]

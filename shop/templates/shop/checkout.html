@@ -104,7 +104,16 @@
                             <option value="upi">UPI</option>
                         </select>
                     </div>
-
+                    
+                    <div id="upi-qr-section" style="display: none; text-align: center; margin-bottom: 20px; padding: 10px; border: 1px solid var(--accent-yellow); border-radius: 5px;">
+                        <h6 class="mb-2" style="color: var(--card-text);">Scan to Pay via UPI</h6>
+                        <img 
+                            id="upi-qr-image"
+                            src="" 
+                            alt="UPI QR Code" 
+                            style="width: 150px; height: 150px; background-color: #ffffff; border: 1px solid #000;"
+                        >
+                    </div>
                     <button type="submit" class="btn btn-lg w-100 mt-3 add-to-cart-btn" style="background-color: #383838; color: white;">
                         PAY NOW & CONFIRM ORDER
                     </button>
@@ -123,6 +132,12 @@
 
     {% if not status %}
     <script type="text/javascript">
+        // ----------------------------------------------------------------------
+        // --- Configuration: UPDATE THIS WITH YOUR UPI ID ---
+        const YOUR_UPI_VPA = "8105973923@ybl"; // <-- REPLACE THIS WITH YOUR VPA
+        const STORE_NAME = "ShopZone Ecom";
+        // ----------------------------------------------------------------------
+
         // 1. Load data and setup product map (same as cart.html)
         var productMap = {};
         var django_products = [
@@ -148,6 +163,9 @@
             return JSON.parse(localStorage.getItem("cart") || '{}');
         }
 
+        // Global variable to store total price for UPI
+        let currentCartTotal = 0.00; 
+
         // 2. Render Summary Function
         function renderSummary() {
             let cart = getCart();
@@ -160,6 +178,7 @@
             if (cartIsEmpty) {
                 container.append('<div class="alert alert-danger" style="color: #ff4d4d; background-color: #383838; border-color: #ff4d4d; border-left: 5px solid #ff4d4d;">Your cart is empty. Please return to the cart page.</div>');
                 $('#payment-form button').prop('disabled', true).text('Cart is Empty - Cannot Pay');
+                currentCartTotal = 0;
                 return;
             }
 
@@ -211,13 +230,60 @@
             container.append(html);
             $('#summary-total-price').text(`₹${cartTotal.toFixed(2)}`);
             
+            // Set global total
+            currentCartTotal = cartTotal; 
+            
             // Set the hidden field data for the final POST submission
             $('#final-cart-data-input').val(JSON.stringify(cartDataForSubmit));
+            
+            // Update QR code if UPI is selected
+            if ($('#paymentMethod').val() === 'upi') {
+                 updateQrCode(currentCartTotal);
+            }
+        }
+        
+        // 4. Function to generate UPI QR code string and update the image src
+        function updateQrCode(amount) {
+            if (YOUR_UPI_VPA === "yourname@bankname") {
+                console.error("Please update YOUR_UPI_VPA in checkout.html with your actual UPI ID.");
+                $('#upi-qr-image').attr('src', 'https://via.placeholder.com/150/ff4d4d/ffffff?text=UPDATE+UPI+ID');
+                return;
+            }
+            
+            // Format amount to 2 decimal places
+            const formattedAmount = amount.toFixed(2);
+            
+            // Standard UPI Deep-Link Format (intent URL)
+            // pa: Payee VPA, pn: Payee Name, am: Amount, cu: Currency (INR)
+            const upiLink = `upi://pay?pa=${YOUR_UPI_VPA}&pn=${encodeURIComponent(STORE_NAME)}&am=${formattedAmount}&cu=INR`;
+            
+            // Construct the URL to our new Django view
+            const qrCodeUrl = "{% url 'generate_upi_qr' %}?upi_string=" + encodeURIComponent(upiLink);
+            
+            // Set the new image source
+            $('#upi-qr-image').attr('src', qrCodeUrl);
         }
 
-        // 3. Initial Load
+        // 3. Initial Load & UPI QR Code Toggler
         $(document).ready(function() {
             renderSummary();
+
+            // Function to toggle QR code visibility
+            function toggleQrCode() {
+                if ($('#paymentMethod').val() === 'upi') {
+                    // Update QR code URL before showing
+                    updateQrCode(currentCartTotal);
+                    $('#upi-qr-section').slideDown(200); 
+                } else {
+                    $('#upi-qr-section').slideUp(200);
+                }
+            }
+            
+            // Initial check based on default selected value (Credit Card: 'card')
+            toggleQrCode();
+            
+            // Listen for changes in the payment method selection
+            $('#paymentMethod').on('change', toggleQrCode);
         });
     </script>
     {% endif %}
