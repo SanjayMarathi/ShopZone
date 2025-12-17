@@ -31,7 +31,7 @@
 
 ### <p align="center">🛒 Shopping Cart Management</p>
 <p align="center">
-  <img src="outputs/Cart.png" width="700" alt="Shopping Cart" />
+  <img src="outputs/Cart.png" width="700" alt="Shopping Cart " />
 </p>
 <p align="center">
   Displays selected items, quantity controls, and calculates the total price using the discount price. The final button initiates the two-step checkout process.
